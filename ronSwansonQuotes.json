@@ -1,0 +1,19 @@
+{
+    "quotes": [
+        {
+            "id":    1,
+            "title": "Fishing",
+            "quote": "Fishing relaxes me. It’s like yoga, except I still get to kill something."
+        },
+        {
+            "id":    2,
+            "title": "Too chummy",
+            "quote": "When people get a little too chummy with me I like to call them by the wrong name to let them know I don’t really care about them."
+        },
+        {
+            "id":    3,
+            "title": "Don't Care",
+            "quote": "The less I know about other people’s affairs, the happier I am. I’m not interested in caring about people. I once worked with a guy for three years and never learned his name. Best friend I ever had. We still never talk sometimes."
+        }
+    ]
+}
