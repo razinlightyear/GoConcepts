@@ -1,3 +1,24 @@
+/*
+ *  A basic Ron Swanson quotes API - Andrew Emrazian
+ *
+ *	Usage:
+ *	Start API
+ *	$ go get github.com/gin-gonic/gin  # download/install API package
+ *	$ go run simpleAPI.go 3005  # Optional port argument. Defaults to 3000
+ *
+ *	GET /v1/quotes  # get all quotes
+ *	$ curl http://127.0.0.1:3005/v1/quotes
+ *
+ *	GET /v1/quotes/new  # new quote html form
+ *	$ curl http://127.0.0.1:3005/v1/quote/new
+ *
+ *	GET /v1/quote?id=1  # find quote by id
+ *	$ curl http://127.0.0.1:3005/v1/quote?id=1
+ *
+ *	POST /v1/quote  # create quote
+ *	$ curl -d "title=Not%20a%20rabbit&quote=Server:Ron,%20would%20you%20like%20some%20salad?%0ARon:%20Since%20I%20am%20not%20a%20rabbit,%20no,%20I%20do%20not." \
+ *	       -X POST http://127.0.0.1:3005/v1/quote
+ */
 package main
 
 import (
@@ -11,14 +32,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// We'll just have a map from titles to a Quote
-//var quotes map[string] Quote
-
-type Quotes struct {
-	Quotes []Quote `json:"quotes"`
+type SwansonQuotes struct {
+	Quotes []SwansonQuote `json:"swansonQuotes"`
 }
 
-type Quote struct {
+type SwansonQuote struct {
 	ID    int    `json:"id"`
 	Title string `json:"title"`
 	Quote string `json:"quote"`
@@ -34,7 +52,7 @@ func main() {
 	if len(os.Args) > 1 {
 		port = os.Args[1]
 	}
-	fmt.Println(port)
+	// fmt.Println(port)
 
 	// Load the quotes from the JSON file
 	jsonFile, err := os.Open("ronSwansonQuotes.json")
@@ -43,29 +61,19 @@ func main() {
 		fmt.Println(err)
 	}
 	fmt.Println("Successfully Opened ronSwansonQuotes.json")
-	// defer the closing of our jsonFile so that we can parse it later on
 	defer jsonFile.Close()
 
+	// Load the json objects into an array and a map
 	byteValue, _ := ioutil.ReadAll(jsonFile)
-	var quotesArr Quotes
-	quotes := make(map[int]Quote)
+	var quotesArr SwansonQuotes
+	quotesMap := make(map[int]SwansonQuote)
 
 	// we unmarshal our byteArray which contains our
 	// jsonFile's content into 'quotesArr' which we defined above
 	json.Unmarshal(byteValue, &quotesArr)
 
-	// we iterate through every user within our users array and
-	// print out the user Type, their name, and their facebook url
-	// as just an example
-	// for _, quote := range quotes {
-	// 	fmt.Println("Quote Title: " + quote.Title)
-	// 	fmt.Println("Quote: " + quote.Quote)
-	// }
 	for i := 0; i < len(quotesArr.Quotes); i++ {
-		fmt.Printf("Quote Id: %d\n", quotesArr.Quotes[i].ID)
-		fmt.Println("Quote Title: " + quotesArr.Quotes[i].Title)
-		fmt.Println("Quote: " + quotesArr.Quotes[i].Quote)
-		quotes[quotesArr.Quotes[i].ID] = quotesArr.Quotes[i]
+		quotesMap[quotesArr.Quotes[i].ID] = quotesArr.Quotes[i]
 	}
 
 	// Set up API
@@ -77,26 +85,17 @@ func main() {
 	})
 
 	r.GET("/v1/quotes", func(c *gin.Context) {
-		//var allQuotes = gin.H{"quotes": quotesArr}
-		fmt.Println("*************")
-		for _, quote := range quotes {
-			fmt.Println(quote.Title)
-			fmt.Println(quote.Quote)
-			//allQuotes[strconv.Itoa(quote.ID)] = gin.H{"title": quote.Title, "quote": quote.Quote}
-		}
-		fmt.Println("*************")
-		//fmt.Println(allQuotes)
-		//fmt.Println(len(allQuotes))
 		c.JSON(http.StatusOK, quotesArr)
 	})
 
 	r.GET("/v1/quote/new", newQuote)
 
 	r.GET("/v1/quote", func(c *gin.Context) {
+		fmt.Printf("Param id: %s\n", c.Query("id"))
 		id, err := strconv.Atoi(c.Query("id"))
 		if err == nil {
-			if _, ok := quotes[id]; ok {
-				c.JSON(http.StatusOK, gin.H{"quote": quotes[id]})
+			if _, ok := quotesMap[id]; ok {
+				c.JSON(http.StatusOK, gin.H{"quote": quotesMap[id]})
 			} else {
 				c.JSON(http.StatusNotFound, gin.H{"404": "not found"})
 			}
@@ -108,9 +107,9 @@ func main() {
 	r.POST("/v1/quote", func(c *gin.Context) {
 		title := c.PostForm("title")
 		quote := c.PostForm("quote")
-		q := Quote{len(quotesArr.Quotes) + 1, title, quote}
+		q := SwansonQuote{len(quotesArr.Quotes) + 1, title, quote}
 		quotesArr.Quotes = append(quotesArr.Quotes, q)
-		quotes[q.ID] = q
+		quotesMap[q.ID] = q
 		c.JSON(http.StatusCreated, gin.H{
 			"quote": gin.H{
 				"id":    q.ID,
